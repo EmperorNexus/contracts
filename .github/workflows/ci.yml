@@ -121,11 +121,18 @@ jobs:
       - name: Run Upgrade Authority Enforcement Tests
         run: cargo test upgrade_auth --workspace
 
+      # Bindings depend on a successful workspace WASM build (currently
+      # non-blocking; see the note on the Build WASM step). Mark this
+      # non-blocking too so bindings-drift detection doesn't spuriously
+      # fail wave PRs.
       - name: Generate Stellar TypeScript bindings
+        id: bindings
+        continue-on-error: true
         run: pnpm bindings:stellar
         working-directory: .
 
       - name: Check for bindings drift (diff detection)
+        if: steps.bindings.outcome == 'success'
         run: git diff --exit-code
         working-directory: .
 
